@@ -115,7 +115,7 @@ public:
 
 	static bool LoadSgbFirmware(Console* console, uint8_t** prgRom, uint32_t& prgSize, bool useSgb2)
 	{
-		string filename = useSgb2 ? "SGB2.sfc" : "SGB1.sfc";
+		string filename = useSgb2 ? "gbx/SGB2.sfc" : "gbx/SGB1.sfc";
 		prgSize = useSgb2 ? 0x80000 : 0x40000;
 		if(AttemptLoadFirmware(prgRom, filename, prgSize)) {
 			return true;
