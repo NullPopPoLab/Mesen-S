@@ -38,7 +38,7 @@ private:
 	
 	static bool AttemptLoadBsxFirmware(uint8_t** prgRom, uint32_t& prgSize)
 	{
-		VirtualFile firmware(FolderUtilities::CombinePath(FolderUtilities::GetFirmwareFolder(), "BS-X.bin"));
+		VirtualFile firmware(FolderUtilities::CombinePath(FolderUtilities::GetFirmwareFolder(), "snes/BS-X.bin"));
 		if(firmware.IsValid() && firmware.GetSize() >= 0x8000) {
 			*prgRom = new uint8_t[firmware.GetSize()];
 			prgSize = (uint32_t)firmware.GetSize();
@@ -100,7 +100,7 @@ public:
 		}
 
 		MissingFirmwareMessage msg;
-		msg.Filename = "BS-X.bin";
+		msg.Filename = "snes/BS-X.bin";
 		msg.Firmware = FirmwareType::Satellaview;
 		msg.Size = 1024*1024;
 		console->GetNotificationManager()->SendNotification(ConsoleNotificationType::MissingFirmware, &msg);
@@ -141,10 +141,10 @@ public:
 		string altFilename;
 		switch(type) {
 			default:
-			case FirmwareType::Gameboy: filename = "dmg_boot.bin"; altFilename = "gb_bios.bin"; break;
-			case FirmwareType::GameboyColor: filename = "cgb_boot.bin"; altFilename = "gbc_bios.bin"; break;
-			case FirmwareType::Sgb1GameboyCpu: filename = "sgb_boot.bin"; altFilename = "sgb_bios.bin"; break;
-			case FirmwareType::Sgb2GameboyCpu: filename = "sgb2_boot.bin"; altFilename = "sgb_bios.bin"; break;
+			case FirmwareType::Gameboy: filename = "gbx/dmg_boot.bin"; altFilename = "gbx/gb_bios.bin"; break;
+			case FirmwareType::GameboyColor: filename = "gbx/cgb_boot.bin"; altFilename = "gbx/gbc_bios.bin"; break;
+			case FirmwareType::Sgb1GameboyCpu: filename = "gbx/sgb_boot.bin"; altFilename = "gbx/sgb_bios.bin"; break;
+			case FirmwareType::Sgb2GameboyCpu: filename = "gbx/sgb2_boot.bin"; altFilename = "gbx/sgb_bios.bin"; break;
 		}
 
 		uint32_t size = type == FirmwareType::GameboyColor ? 2304 : 256;
