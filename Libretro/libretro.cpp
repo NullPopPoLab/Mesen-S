@@ -28,6 +28,8 @@
 #define DEVICE_SUPERSCOPE         RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_POINTER, 0)
 #define DEVICE_SNESMOUSE          RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_MOUSE, 2)
 
+#define CUSTOM_VERSION "+NC41"
+
 static retro_log_printf_t logCallback = nullptr;
 static retro_environment_t retroEnv = nullptr;
 static unsigned _inputDevices[5] = { DEVICE_GAMEPAD, DEVICE_GAMEPAD, DEVICE_NONE, DEVICE_NONE, DEVICE_NONE };
@@ -740,6 +742,10 @@ extern "C" {
 
 	RETRO_API void retro_get_system_info(struct retro_system_info *info)
 	{
+		static char buf[256]={0};
+		strncpy(buf,(_mesenVersion + CUSTOM_VERSION).c_str(),sizeof(buf));
+		buf[sizeof(buf)-1]=0;
+
 		if(!_console) {
 			_console.reset(new Console());
 			_console->Initialize();
@@ -747,7 +753,7 @@ extern "C" {
 		_mesenVersion = _console->GetSettings()->GetVersionString();
 
 		info->library_name = "Mesen-S";
-		info->library_version = _mesenVersion.c_str();
+		info->library_version = buf;
 		info->need_fullpath = false;
 		info->valid_extensions = "sfc|smc|fig|swc|gb|gbc|bs";
 		info->block_extract = false;
