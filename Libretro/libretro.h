@@ -2797,7 +2797,7 @@ typedef void (RETRO_CALLCONV *retro_input_poll_t)(void);
  * have been set with retro_set_controller_port_device()
  * will still use the higher level RETRO_DEVICE_JOYPAD to request input.
  */
-typedef int16_t (RETRO_CALLCONV *retro_input_state_t)(unsigned port, unsigned device,
+typedef int32_t (RETRO_CALLCONV *retro_input_state_t)(unsigned port, unsigned device,
       unsigned index, unsigned id);
 
 /* Sets callbacks. retro_set_environment() is guaranteed to be called
