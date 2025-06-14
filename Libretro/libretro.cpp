@@ -35,6 +35,8 @@ static retro_environment_t retroEnv = nullptr;
 static unsigned _inputDevices[5] = { DEVICE_GAMEPAD, DEVICE_GAMEPAD, DEVICE_NONE, DEVICE_NONE, DEVICE_NONE };
 static string _mesenVersion = "";
 static int32_t _saveStateSize = -1;
+static int _mesenTurboSpeed = 0;
+static bool _isGB=false;
 
 static std::shared_ptr<Console> _console;
 static std::unique_ptr<LibretroRenderer> _renderer;
@@ -56,6 +58,7 @@ static constexpr const char* MesenSuperFxOverclock = "mesen-s_superfx_overclock"
 static constexpr const char* MesenGbModel = "mesen-s_gbmodel";
 static constexpr const char* MesenGbSgb2 = "mesen-s_sgb2";
 static constexpr const char* MesenHLE = "mesen-s_hle_coprocessor";
+static constexpr const char* MesenTurboSpeed = "mesen-s_turbo_speed";
 
 extern "C" {
 	void logMessage(retro_log_level level, const char* message)
@@ -130,6 +133,7 @@ extern "C" {
 			{ MesenSuperFxOverclock, "Super FX Clock Speed; 100%|200%|300%|400%|500%|1000%" },
 			{ MesenRamState, "Default power-on state for RAM; Random Values (Default)|All 0s|All 1s" },
 			{ MesenHLE, "Use HLE coprocessor emulation; disabled|enabled" },
+			{ MesenTurboSpeed, "Turbo Speed; 0|1|2|3" },
 			{ NULL, NULL },
 		};
 
@@ -389,6 +393,11 @@ extern "C" {
 			}
 		}
 
+		if(readVariable(MesenTurboSpeed, var)) {
+			string value = string(var.value);
+			_mesenTurboSpeed = atoi(value.c_str());
+		}
+
 		if(readVariable(MesenHLE, var)) {
 			string value = string(var.value);
 			emulation.EnableHleCoprocessor = (value == "enabled");
@@ -428,16 +437,34 @@ extern "C" {
 
 		auto getKeyBindings = [=](int port) {
 			KeyMappingSet keyMappings;
-			keyMappings.TurboSpeed = 0;
-			keyMappings.Mapping1.L = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_L);
-			keyMappings.Mapping1.R = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_R);
+			keyMappings.TurboSpeed = _mesenTurboSpeed;
+
 			keyMappings.Mapping1.A = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_A);
 			keyMappings.Mapping1.B = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_B);
-			keyMappings.Mapping1.X = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_X);
-			keyMappings.Mapping1.Y = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_Y);
-
 			keyMappings.Mapping1.Start = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_START);
 			keyMappings.Mapping1.Select = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_SELECT);
+
+			if(_isGB) {
+				keyMappings.Mapping1.TurboA = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_X);
+				keyMappings.Mapping1.TurboB = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_Y);
+				keyMappings.Mapping1.TurboStart = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_G2);
+				keyMappings.Mapping1.TurboSelect = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_G1);
+			}
+			else{
+				keyMappings.Mapping1.X = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_X);
+				keyMappings.Mapping1.Y = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_Y);
+				keyMappings.Mapping1.L = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_L);
+				keyMappings.Mapping1.R = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_R);
+
+				keyMappings.Mapping1.TurboA = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_R4);
+				keyMappings.Mapping1.TurboB = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_R5);
+				keyMappings.Mapping1.TurboX = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_L4);
+				keyMappings.Mapping1.TurboY = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_L5);
+				keyMappings.Mapping1.TurboL = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_L2);
+				keyMappings.Mapping1.TurboR = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_R2);
+				keyMappings.Mapping1.TurboStart = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_G2);
+				keyMappings.Mapping1.TurboSelect = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_G1);
+			}
 
 			keyMappings.Mapping1.Up = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_UP);
 			keyMappings.Mapping1.Down = getKeyCode(port, RETRO_DEVICE_ID_JOYPAD_DOWN);
@@ -581,12 +608,30 @@ extern "C" {
 				addDesc(port, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right");
 				addDesc(port, RETRO_DEVICE_ID_JOYPAD_A, "A");
 				addDesc(port, RETRO_DEVICE_ID_JOYPAD_B, "B");
-				addDesc(port, RETRO_DEVICE_ID_JOYPAD_X, "X");
-				addDesc(port, RETRO_DEVICE_ID_JOYPAD_Y, "Y");
-				addDesc(port, RETRO_DEVICE_ID_JOYPAD_L, "L");
-				addDesc(port, RETRO_DEVICE_ID_JOYPAD_R, "R");
 				addDesc(port, RETRO_DEVICE_ID_JOYPAD_START, "Start");
 				addDesc(port, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select");
+
+				if(_isGB) {
+					addDesc(port, RETRO_DEVICE_ID_JOYPAD_X, "Turbo A");
+					addDesc(port, RETRO_DEVICE_ID_JOYPAD_Y, "Turbo B");
+					addDesc(port, RETRO_DEVICE_ID_JOYPAD_G2, "Turbo Start");
+					addDesc(port, RETRO_DEVICE_ID_JOYPAD_G1, "Turbo Select");
+				}
+				else{
+					addDesc(port, RETRO_DEVICE_ID_JOYPAD_X, "X");
+					addDesc(port, RETRO_DEVICE_ID_JOYPAD_Y, "Y");
+					addDesc(port, RETRO_DEVICE_ID_JOYPAD_L, "L");
+					addDesc(port, RETRO_DEVICE_ID_JOYPAD_R, "R");
+
+					addDesc(port, RETRO_DEVICE_ID_JOYPAD_R4, "Turbo A");
+					addDesc(port, RETRO_DEVICE_ID_JOYPAD_R5, "Turbo B");
+					addDesc(port, RETRO_DEVICE_ID_JOYPAD_L4, "Turbo X");
+					addDesc(port, RETRO_DEVICE_ID_JOYPAD_L5, "Turbo Y");
+					addDesc(port, RETRO_DEVICE_ID_JOYPAD_L2, "Turbo L");
+					addDesc(port, RETRO_DEVICE_ID_JOYPAD_R2, "Turbo R");
+					addDesc(port, RETRO_DEVICE_ID_JOYPAD_G2, "Turbo Start");
+					addDesc(port, RETRO_DEVICE_ID_JOYPAD_G1, "Turbo Select");
+				}
 			}
 		};
 
@@ -707,6 +752,8 @@ extern "C" {
 		bool result = _console->LoadRom(romData, patch);
 
 		if(result) {
+			_isGB=!!_console->GetCartridge()->GetGameboy();
+
 			update_core_controllers();
 			update_input_descriptors();
 
